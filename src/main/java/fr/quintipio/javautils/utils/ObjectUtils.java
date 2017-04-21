@@ -38,50 +38,58 @@ public class ObjectUtils {
      * Le premier element est le plus petit.
      */
     public static final int COMPARE_PLUS_PETIT_EN_PREMIER = -1;
-    
+
     private ObjectUtils() {}
-    
-    /**
-	 * Transfert les données d'un modèle contenu dans inputObject dans un nouvel objet de type outputClass à condition que les variables soient les mêmes des deux côtés.
-	 * @param inputObject l'objet en entré contenant les données à copier
-	 * @param outputClass le type d'objet souhaité en sortie
-	 * @return le nouvel objet de type outputClass avec les données d'inputObject à l'intérieur
-	 * @throws InstantiationException
-	 * @throws NoSuchMethodException
-	 * @throws SecurityException
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException
-	 */
-	@SuppressWarnings("unchecked")
-	public static <O,I> O transferDataModel(I inputObject, Class<O> outputClass) throws InstantiationException, NoSuchMethodException  , IllegalAccessException , InvocationTargetException {
 
-		O outputData = outputClass.newInstance();
+      /**
+         * Transfert les données d'un modèle contenu dans inputObject dans un nouvel objet de type outputClass à condition que les variables soient les mêmes des deux côtés.
+         * @param inputObject l'objet en entré contenant les données à copier
+         * @param outputClass le type d'objet souhaité en sortie
+         * @param listeAttributExclus une liste des noms d'attributs dont les setter à remplir sont à exclure (null si aucun)
+         * @return le nouvel objet de type outputClass avec les données d'inputObject à l'intérieur
+         * @throws InstantiationException
+         * @throws NoSuchMethodException
+         * @throws SecurityException
+         * @throws IllegalAccessException
+         * @throws IllegalArgumentException
+         * @throws InvocationTargetException
+         */
+         @SuppressWarnings("unchecked")
+         public static <O,I> O transferDataModel(I inputObject, Class<O> outputClass,final List<String> listeAttributExclus) throws InstantiationException, NoSuchMethodException  , IllegalAccessException , InvocationTargetException {
 
-		//récupération des setters et pour chacun appel du getter s'il existe
-		Arrays.asList(outputData.getClass().getDeclaredMethods()).stream().filter(x -> x.getName().startsWith("set")).collect(Collectors.toList()).stream().forEach(y -> {
-			//pour chaque setter, on récupère le nom de la variable
-			String nameMethod = y.getName().replaceFirst("set", "");
+               List<String> listeExclu = new ArrayList<String>();
+               if(listeAttributExclus != null) {
+                      listeAttributExclus.stream().forEach(x -> listeExclu.add("set"+StringUtils.firstLetterUppper(x)));
+               }
 
-			//vérification que le getter associé existe bien
-			if(Arrays.asList(inputObject.getClass().getDeclaredMethods()).stream().filter(x -> x.getName().equals("get"+nameMethod)).count() > 0) {
+               O outputData = outputClass.newInstance();
+              
+               //récupération des setters et pour chacun appel du getter s'il existe
+               Arrays.asList(outputData.getClass().getDeclaredMethods()).stream().filter(x -> x.getName().startsWith("set")).collect(Collectors.toList()).stream().forEach(y -> {
+                      if(!listeExclu.stream().anyMatch(s -> s.equals(y.getName()))) {
+                             //pour chaque setter, on récupère le nom de la variable
+                             String nameMethod = y.getName().replaceFirst("set", "");
 
-				// si le getter existe, récupération du getter
-				Method getter;
-				try {
-					getter = inputObject.getClass().getDeclaredMethod("get"+nameMethod);
-					y.invoke(outputData, getter.invoke(inputObject));
-				} catch (Exception vEx) {
-					return null;
-				}
-				//appel du setter rempli par le getter
+                             //vérification que le getter associé existe bien
+                             if(Arrays.asList(inputObject.getClass().getDeclaredMethods()).stream().filter(x -> x.getName().equals("get"+nameMethod)).count() > 0) {
 
-			}
-		});
-		return outputData;
-	}
-        
-        
+                                    // si le getter existe, récupération du getter
+                                    Method getter;
+                                    try {
+                                          getter = inputObject.getClass().getDeclaredMethod("get"+nameMethod);
+                                          y.invoke(outputData, getter.invoke(inputObject));
+                                    } catch (Exception vEx) {
+                                          LOGGER.error(vEx.getMessage(), vEx.getCause());
+                                    }
+                                    //appel du setter rempli par le getter
+
+                             }
+                      }
+               });
+               return outputData;
+         }
+
+
         /**
      * <p>
      * Retourne l'objet cloné en profondeur (toutes les propriétés de l'objet sont clonées en profondeur).
@@ -488,10 +496,5 @@ public class ObjectUtils {
     public static String testNullAlorsBlanc(final Object obj) {
         return (obj != null) ? obj.toString() : "";
     }
-
-    /**
-     * Constructeur privé pour interdire l'instanciation.
-     */
-    private ObjectUtils() {}
 
 }
