@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -57,9 +58,9 @@ public class ObjectUtils {
          @SuppressWarnings("unchecked")
          public static <O,I> O transferDataModel(I inputObject, Class<O> outputClass,final List<String> listeAttributExclus) throws InstantiationException, NoSuchMethodException  , IllegalAccessException , InvocationTargetException {
 
-               List<String> listeExclu = new ArrayList<String>();
+               List<String> listeExclu = new ArrayList<>();
                if(listeAttributExclus != null) {
-                      listeAttributExclus.stream().forEach(x -> listeExclu.add("set"+StringUtils.firstLetterUppper(x)));
+                      listeAttributExclus.stream().forEach(x -> listeExclu.add("set"+StringUtils.formatageSeulementPremiereLettreMajuscule(x)));
                }
 
                O outputData = outputClass.newInstance();
@@ -79,7 +80,7 @@ public class ObjectUtils {
                                           getter = inputObject.getClass().getDeclaredMethod("get"+nameMethod);
                                           y.invoke(outputData, getter.invoke(inputObject));
                                     } catch (Exception vEx) {
-                                          LOGGER.error(vEx.getMessage(), vEx.getCause());
+                                          
                                     }
                                     //appel du setter rempli par le getter
 
